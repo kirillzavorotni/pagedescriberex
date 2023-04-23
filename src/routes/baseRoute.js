@@ -3,38 +3,65 @@ const { Router } = require('express');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const he = require('he');
+const iconv = require('iconv-lite'); // Import iconv-lite
+const jschardet = require('jschardet'); // Import jschardet
 
 const router = Router();
 
+const LANGUAGE = 'русском';
+
 const PROMPT = ''
-    + 'Дай менее детальную выжимку из этого текста по каждому из логически отделенного раздела этого текста и '
+    + `Дай менее детальную выжимку на ${LANGUAGE} языке из этого текста по каждому из логически отделенного раздела этого текста и `
     + 'c необходимыми подробностями и с выделенем основных (возможно важных) элементов в этом тексте:';
 
-router.get(
+router.post(
     '/',
     async (req, res) => {
+        const pageUrl = req.body.pageUrl;
+
         const response = await axios({
             method: 'get',
-            url: 'https://www.onliner.by/',
+            url: pageUrl || 'https://google.com',
+            responseType: 'arraybuffer', // Set the responseType to 'arraybuffer'
+            responseEncoding: 'binary', // Set the responseEncoding to 'binary'
         }).catch((error) => {
             console.error(error);
         });
 
-        const cheerioAPI = cheerio.load(response.data);
+        // Detect encoding using jschardet
+        const detectedEncoding = jschardet.detect(response.data).encoding;
+
+        // Convert the response to the detected encoding using iconv-lite
+        const decodedResponseData = iconv.decode(response.data, detectedEncoding);
+
+        let cheerioAPI = cheerio.load(decodedResponseData);
         cheerioAPI('script').remove(); // Remove script tags and their content
         cheerioAPI('style').remove(); // Remove style tags and their content
         cheerioAPI('iframe').remove(); // Remove iframe tags and their content
-        const html = cheerioAPI.html(); // Get the remaining HTML content as a string
+        let html = cheerioAPI.html(); // Get the remaining HTML content as a string
 
         // Remove all HTML tags using a regular expression
-        const text = html.replace(/<[^>]*>/g, '');
+        let text = html.replace(/<[^>]*>/g, '');
         // Decode HTML entities
-        const decodedText = he.decode(text);
+        let decodedText = he.decode(text);
         // Remove extra spaces, line breaks, and other whitespace characters
-        const clearText = decodedText.replace(/\s+/g, ' ').trim();
+        let clearText = decodedText.replace(/\s+/g, ' ').trim();
+
+        cheerioAPI = cheerio.load(clearText);
+        cheerioAPI('script').remove(); // Remove script tags and their content
+        cheerioAPI('style').remove(); // Remove style tags and their content
+        cheerioAPI('iframe').remove(); // Remove iframe tags and their content
+        html = cheerioAPI.html(); // Get the remaining HTML content as a string
+
+        // Remove all HTML tags using a regular expression
+        text = html.replace(/<[^>]*>/g, '');
+        // Decode HTML entities
+        decodedText = he.decode(text);
+        // Remove extra spaces, line breaks, and other whitespace characters
+        clearText = decodedText.replace(/\s+/g, ' ').trim();
 
         res.status(200);
-        res.send(clearText);
+        res.send(`${PROMPT}\n"${clearText}"`);
     },
 );
 

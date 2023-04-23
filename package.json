@@ -27,6 +27,8 @@
     "express": "^4.18.2",
     "express-validator": "^7.0.1",
     "he": "^1.2.0",
+    "iconv-lite": "^0.6.3",
+    "jschardet": "^3.0.0",
     "log4js": "^6.9.1"
   },
   "devDependencies": {
