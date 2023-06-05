@@ -9,9 +9,7 @@
 const puppeteer = require('puppeteer');
 const { SystemError } = require('./error/errorModule');
 
-const getUrlSummary = async (url) => {
-    console.log('url = ', url);
-
+const getPageTextContent = async (url) => {
     const browser = await puppeteer.launch({
         headless: true,
         defaultViewport: null,
@@ -36,6 +34,12 @@ const getUrlSummary = async (url) => {
     await browser.close();
 
     return textContent;
+};
+
+const getUrlSummary = async (url) => {
+    const pageText = await getPageTextContent(url);
+
+    return pageText;
 };
 
 module.exports = {
