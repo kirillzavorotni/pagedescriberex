@@ -8,6 +8,8 @@
 //     + `Дай менее детальную выжимку на ${LANGUAGE} языке из этого текста по каждому из логически отделенного раздела этого текста и `
 //     + 'c необходимыми подробностями и с выделенем основных (возможно важных) элементов в этом тексте:';
 
+const { SystemError } = require('../services/error/errorModule');
+
 const getUrlSummary = async () => {
     return new Promise((resolve) => {
         setTimeout(() => {
